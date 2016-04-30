@@ -1,1 +1,1 @@
-# BitcoinPricePredictor
+# Bitcoin Price Predictor
