@@ -1,0 +1,48 @@
+
+Options: -additional-stats 
+
+
+Linear Regression Model
+
+bitcoin =
+
+-Infinity * jap_yen +
+-Infinity * euro +
+Infinity
+
+Regression Analysis:
+
+Variable     Coefficient     SE of Coef        t-Stat
+jap_yen    -Infinity       NaN            NaN     
+euro       -Infinity       NaN            NaN     
+const      Infinity       NaN            NaN     
+
+Degrees of freedom = 1145
+R^2 value = NaN
+Adjusted R^2 = NaN
+F-statistic = NaN
+
+Time taken to build model: 0.19 seconds
+Time taken to test model on training data: 0.03 seconds
+
+=== Error on training data ===
+
+Correlation coefficient                NaN     
+Mean absolute error                    NaN     
+Root mean squared error                NaN     
+Relative absolute error                NaN      %
+Root relative squared error            NaN      %
+UnClassified Instances                1148              100      %
+Total Number of Instances             1148     
+
+
+=== Error on test data ===
+
+Correlation coefficient                NaN     
+Mean absolute error                    NaN     
+Root mean squared error                NaN     
+Relative absolute error                NaN      %
+Root relative squared error            NaN      %
+UnClassified Instances                1148              100      %
+Total Number of Instances             1148     
+
