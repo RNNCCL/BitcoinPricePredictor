@@ -12,34 +12,34 @@ def createARFFFiles():
         first_line = True
         for line in f:
             if(first_line):
-            	first_line = False
+                first_line = False
                 continue
             split = line.split(",")
             date = split[0]
             price = split[1].rstrip()
             date = correctDate(date, False)
             if date not in data_map:
-            	data_map[date] = {"jap_yen": price, "euro": -1, "bitcoin": -1}
+                data_map[date] = {"jap_yen": price, "euro": -1, "bitcoin": -1}
                 dates.append(date)
 
     with open("../data/euro_price.csv") as f:
         first_line = True
         for line in f:
             if(first_line):
-            	first_line = False
+                first_line = False
                 continue
             split = line.split(",")
             date = split[0]
             date = correctDate(date, False)
             price = split[1].rstrip()
             if date in data_map:
-            	data_map[date]["euro"] = price
+                data_map[date]["euro"] = price
 
     with open("../data/bitcoin_price.csv") as f:
         first_line = True
         for line in f:
             if(first_line):
-            	first_line = False
+                first_line = False
                 continue
             split = line.split(",")
             date = split[0].rstrip()
@@ -49,7 +49,7 @@ def createARFFFiles():
             #print(new_date_string)
             price = split[4]
             if date in data_map:
-            	data_map[date]["bitcoin"] = price
+                data_map[date]["bitcoin"] = price
 
     print(data_map) 
 
@@ -85,7 +85,7 @@ def createARFFFiles():
 
     #Testing Data
     f = open("../data/testing.arff", "w")
-    f.write("@Relation TRAINING\n\n")
+    f.write("@Relation TESTING\n\n")
     last_key = ""
     for v in variable_order:
         if(v == "dates"):
@@ -95,7 +95,7 @@ def createARFFFiles():
         last_key = v
     f.write("\n@DATA\n")
 
-    for date in training_dates:
+    for date in testing_dates:
         for v in variable_order:
             f.write(str(data_map[date][v]))
             if(v != last_key):
@@ -127,7 +127,7 @@ def runLinearRegression():
     os.system(command)
 
 if __name__ == "__main__":
-	#createARFFFiles()
+    createARFFFiles()
     runLinearRegression()
 
 
