@@ -1,12 +1,13 @@
 import math
 import os
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+from sklearn.linear_model import BayesianRidge, LinearRegression
 
 
-# data_map = {}
+def gatherData():
 
-def createARFFFiles():
-
-    #data_map = {date: {"jap_yen": 0, "euro": 0, "bitcoin": 0} }
 
     data_map = {}
     dates = []
@@ -160,57 +161,73 @@ def createARFFFiles():
 
     # print(data_map) 
 
-    training_index = int(math.ceil(len(dates)*.7))
-    training_dates = dates[:training_index]
-    testing_dates = dates[training_index:]
-
-    variable_order = ["jap_yen", "yuan", "riyal", "rouble", "euro", "pound", "koruna", "franc", "hkd", "bitcoin"]
-
-    scikit(data_map)
+    return(data_map)
 
     
-    #Training Data
-    f = open("../data/training.arff", "w")
 
-    f.write("@Relation TRAINING\n\n")
-    last_key = ""
-    for v in variable_order:
-        if(v == "dates"):
-            f.write("@ATTRIBUTE " + v + " DATE " + "\"MM-dd-yyyy\"\n")
-        else:
-            f.write("@ATTRIBUTE " + v + " NUMERIC\n")
-        last_key = v
-    f.write("\n@DATA\n")
 
-    for date in training_dates:
-        for v in variable_order:
-            f.write(str(data_map[date][v]))
-            if(v != last_key):
-                f.write(",")
-        f.write("\n")
+def fitToModelAndPlot(data_map):
+    feature_array = []
+    label_array = []
+    for date,val in data_map.iteritems():
+        franc = float(val["franc"])
+        yuan =  float(val["yuan"])
+        hkd = float(val["hkd"])
+        euro = float(val["euro"])
+        koruna = float(val["koruna"])
+        jap_yen = float(val["jap_yen"])
+        pound = float(val["pound"])
+        bitcoin = float(val["bitcoin"])
+        riyal = float(val["riyal"])
+        rouble = float(val["rouble"])
+
+        # print(riyal)
+
+        if(franc == 0 or yuan == 0 or hkd == 0 or euro == 0 or koruna == 0 or jap_yen == 0 or pound == 0 or riyal == 0 or rouble == 0):
+            continue
+
+        if(bitcoin > 100000):
+            continue
+
+        features = (franc, yuan, hkd, euro, koruna, jap_yen, pound, riyal, rouble)
+        feature_array.append(features)
+        label_array.append(bitcoin)
+
+
+    clf = BayesianRidge(compute_score=True)
+    clf.fit(feature_array, label_array)
+
+
+    # print("Feature array size: ", len(feature_array),feature_array)
+    print("Label array size: ", len(label_array),label_array)
+
+    n_features = 9
+
+    plt.figure(figsize=(6, 5))
+    plt.title("Weights of the model")
+    plt.plot(clf.coef_, 'b-', label="Bayesian Ridge estimate")
+    plt.plot(label_array, 'g-', label="Ground truth")
+    # plt.plot(ols.coef_, 'r--', label="OLS estimate")
+    plt.xlabel("Features")
+    plt.ylabel("Values of the weights")
+    plt.legend(loc="best", prop=dict(size=12))
+
+    plt.figure(figsize=(6, 5))
+    plt.title("Histogram of the weights")
+    plt.hist(clf.coef_, bins=n_features, log=True)
+    # plt.plot(clf.coef_[feature_array], 5 * np.ones(len(feature_array)),
+    #          'ro', label="Relevant features")
+    plt.ylabel("Features")
+    plt.xlabel("Values of the weights")
+    plt.legend(loc="lower left")
+
+    plt.figure(figsize=(6, 5))
+    plt.title("Marginal log-likelihood")
+    plt.plot(clf.scores_)
+    plt.ylabel("Score")
+    plt.xlabel("Iterations")
+    plt.show()
     
-    f.close()
-
-    #Testing Data
-    f = open("../data/testing.arff", "w")
-    f.write("@Relation TESTING\n\n")
-    last_key = ""
-    for v in variable_order:
-        if(v == "dates"):
-            f.write("@ATTRIBUTE " + v + " DATE " + "\"MM-dd-yyyy\"\n")
-        else:
-            f.write("@ATTRIBUTE " + v + " NUMERIC\n")
-        last_key = v
-    f.write("\n@DATA\n")
-
-    for date in testing_dates:
-        for v in variable_order:
-            f.write(str(data_map[date][v]))
-            if(v != last_key):
-                f.write(",")
-        f.write("\n")
-    
-    f.close()
 
 
 
@@ -232,13 +249,8 @@ def correctDate(old_date, IS_BITCOIN):
 
         return new_date_string
 
-def runLinearRegression():
-    command = "java -cp ../weka.jar weka.classifiers.functions.LinearRegression -t ../data/training.arff -T ../data/testing.arff -additional-stats > ../data/output/regression_output.out"
-    # command = "java -cp ../weka.jar weka.classifiers.functions.SMOreg -t ../data/training.arff -T ../data/testing.arff > ../data/output/regression_output.out"
-    os.system(command)
 
 if __name__ == "__main__":
-    createARFFFiles()
-    runLinearRegression()
-
+    data_map = gatherData()
+    fitToModelAndPlot(data_map)
 
