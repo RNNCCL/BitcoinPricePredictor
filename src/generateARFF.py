@@ -8,7 +8,7 @@ def createARFFFiles():
     data_map = {}
     dates = []
     #jap_yen
-    with open("../data/japyen_prices.csv") as f:
+    with open("../data/japyen_price.csv") as f:
         first_line = True
         for line in f:
             if(first_line):
@@ -19,10 +19,49 @@ def createARFFFiles():
             price = split[1].rstrip()
             date = correctDate(date, False)
             if date not in data_map:
-                data_map[date] = {"jap_yen": price, "euro": -1, "bitcoin": -1}
+                data_map[date] = {
+                    "jap_yen": price, 
+                    "yuan": -1, 
+                    "riyal": -1, 
+                    "rouble": -1, 
+                    "euro": -1, 
+                    "pound": -1, 
+                    "koruna": -1, 
+                    "franc": -1, 
+                    "hkd": -1, 
+                    "bitcoin": -1
+                }
                 dates.append(date)
 
-    with open("../data/euro_price.csv") as f:
+    with open("../data/euro_price.csv") as f1:
+        first_line = True
+        for line in f1:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correctDate(date, False)
+            price = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["euro"] = price
+
+    with open("../data/yuan_price.csv") as f2:
+        first_line = True
+
+        for line in f2:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correctDate(date, False)
+            price = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["yuan"] = price
+            
+
+    with open("../data/riyal_price.csv") as f:
         first_line = True
         for line in f:
             if(first_line):
@@ -33,7 +72,72 @@ def createARFFFiles():
             date = correctDate(date, False)
             price = split[1].rstrip()
             if date in data_map:
-                data_map[date]["euro"] = price
+                data_map[date]["riyal"] = price
+
+    with open("../data/rouble_price.csv") as f:
+        first_line = True
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correctDate(date, False)
+            price = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["rouble"] = price
+
+    with open("../data/pound_price.csv") as f:
+        first_line = True
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correctDate(date, False)
+            price = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["pound"] = price
+
+    with open("../data/koruna_price.csv") as f:
+        first_line = True
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correctDate(date, False)
+            price = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["koruna"] = price
+
+    with open("../data/franc_price.csv") as f:
+        first_line = True
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correctDate(date, False)
+            price = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["franc"] = price
+
+    with open("../data/hkd_price.csv") as f:
+        first_line = True
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correctDate(date, False)
+            price = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["hkd"] = price
 
     with open("../data/bitcoin_price.csv") as f:
         first_line = True
@@ -128,6 +232,6 @@ def runLinearRegression():
 
 if __name__ == "__main__":
     createARFFFiles()
-    runLinearRegression()
+  #  runLinearRegression()
 
 
