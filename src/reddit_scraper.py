@@ -36,6 +36,7 @@ for s in praw.helpers.submissions_between(r, 'bitcoin'):
 			file_id += 1
     		f.write(str(data))
     		f.close()
+    		data = {}
 
 	except Exception as e:
 		print(e)
