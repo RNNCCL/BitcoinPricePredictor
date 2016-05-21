@@ -10,6 +10,7 @@ data = {}
 r = praw.Reddit(user_agent = "some random bullshit version 1.6577333")
 
 num_submissions = 0
+file_id = 0
 for s in praw.helpers.submissions_between(r, 'bitcoin'):
 	try:
 		num_submissions += 1
@@ -31,8 +32,9 @@ for s in praw.helpers.submissions_between(r, 'bitcoin'):
 		print("Num submissions processed: " + str(num_submissions))
 
 		if(num_submissions % 100 == 0):
-			f = open("reddit_skeddit_backup.dat", "w")
-    		f.write(data)
+			f = open("reddit_skeddit_backup_" + str(file_id), "w")
+			file_id += 1
+    		f.write(str(data))
     		f.close()
 
 	except Exception as e:
