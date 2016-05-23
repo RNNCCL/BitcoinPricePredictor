@@ -7,10 +7,10 @@ from sklearn.linear_model import BayesianRidge, LinearRegression
 from sklearn import ensemble
 from math import ceil
 from math import floor
+from scipy.stats import spearmanr
 
 
-def gatherData():
-
+def gather_data():
 
     data_map = {}
     dates = []
@@ -24,7 +24,7 @@ def gatherData():
             split = line.split(",")
             date = split[0]
             price = split[1].rstrip()
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             if date not in data_map:
                 data_map[date] = {
                     "jap_yen": price, 
@@ -48,7 +48,7 @@ def gatherData():
                 continue
             split = line.split(",")
             date = split[0]
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["euro"] = price
@@ -62,7 +62,7 @@ def gatherData():
                 continue
             split = line.split(",")
             date = split[0]
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["yuan"] = price
@@ -76,7 +76,7 @@ def gatherData():
                 continue
             split = line.split(",")
             date = split[0]
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["riyal"] = price
@@ -89,7 +89,7 @@ def gatherData():
                 continue
             split = line.split(",")
             date = split[0]
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["rouble"] = price
@@ -102,7 +102,7 @@ def gatherData():
                 continue
             split = line.split(",")
             date = split[0]
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["pound"] = price
@@ -115,7 +115,7 @@ def gatherData():
                 continue
             split = line.split(",")
             date = split[0]
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["koruna"] = price
@@ -128,7 +128,7 @@ def gatherData():
                 continue
             split = line.split(",")
             date = split[0]
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["franc"] = price
@@ -141,7 +141,7 @@ def gatherData():
                 continue
             split = line.split(",")
             date = split[0]
-            date = correctDate(date, False)
+            date = correct_date(date, False)
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["hkd"] = price
@@ -156,7 +156,7 @@ def gatherData():
             date = split[0].rstrip()
             date_split = date.split(" ")
             date = date_split[0]
-            date = correctDate(date, True)
+            date = correct_date(date, True)
             #print(new_date_string)
             price = split[4]
             if date in data_map:
@@ -169,7 +169,7 @@ def gatherData():
     
 
 
-def organizeData(data_map):
+def organize_data(data_map):
     feature_array = []
     label_array = []
     for date,val in data_map.iteritems():
@@ -202,7 +202,7 @@ def organizeData(data_map):
     return (feature_array, label_array)
 
 
-def correctDate(old_date, IS_BITCOIN):
+def correct_date(old_date, IS_BITCOIN):
         new_date_string = ""
 
         split_date = old_date.split("/")
@@ -221,7 +221,7 @@ def correctDate(old_date, IS_BITCOIN):
         return new_date_string
 
 
-def bayesianRidgeRegression(feature_array, label_array):
+def bayesian_ridge_regression(feature_array, label_array):
     clf = BayesianRidge(compute_score=True)
     clf.fit(feature_array, label_array)
 
@@ -256,7 +256,11 @@ def bayesianRidgeRegression(feature_array, label_array):
     plt.xlabel("Iterations")
     plt.show()
 
-def randomForest(feature_array, label_array):
+def cal_correlation(x,y):
+    rank_correlation = spearmanr(x, y)[0]
+    return rank_correlation
+
+def random_forest(feature_array, label_array):
     train = int(floor(0.8*len(feature_array)))
     print 'Training with',train,'samples'
     
@@ -275,11 +279,18 @@ def randomForest(feature_array, label_array):
         print (predict_labels[i], " ... ", label_pass_array[i])
         i += 1
 
+    rank_correlation = cal_correlation(label_pass_array,predict_labels)
+    
+    print '\nTraining done --------- '
+    print 'Total samples:          ',len(feature_array)
+    print 'Size of test data:      ',len(predict_labels)
+    print 'Rank correlation:',rank_correlation
+    print '----------------------- \n'
 
 if __name__ == "__main__":
-    data_map = gatherData()
-    X, y = organizeData(data_map)
-    bayesianRidgeRegression(X, y)
-    randomForest(X, y)
+    data_map = gather_data()
+    X, y = organize_data(data_map)
+    bayesian_ridge_regression(X, y)
+    random_forest(X, y)
 
 
