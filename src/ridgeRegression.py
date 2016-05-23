@@ -4,6 +4,9 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 from sklearn.linear_model import BayesianRidge, LinearRegression
+from sklearn import ensemble
+from math import ceil
+from math import floor
 
 
 def gatherData():
@@ -166,7 +169,7 @@ def gatherData():
     
 
 
-def fitToModelAndPlot(data_map):
+def organizeData(data_map):
     feature_array = []
     label_array = []
     for date,val in data_map.iteritems():
@@ -193,42 +196,10 @@ def fitToModelAndPlot(data_map):
         feature_array.append(features)
         label_array.append(bitcoin)
 
+    print("feature_array size:",len(feature_array))
+    print("label_array size:",len(label_array))
 
-    clf = BayesianRidge(compute_score=True)
-    clf.fit(feature_array, label_array)
-
-
-    # print("Feature array size: ", len(feature_array),feature_array)
-    print("Label array size: ", len(label_array),label_array)
-
-    n_features = 9
-
-    plt.figure(figsize=(6, 5))
-    plt.title("Weights of the model")
-    plt.plot(clf.coef_, 'b-', label="Bayesian Ridge estimate")
-    plt.plot(label_array, 'g-', label="Ground truth")
-    # plt.plot(ols.coef_, 'r--', label="OLS estimate")
-    plt.xlabel("Features")
-    plt.ylabel("Values of the weights")
-    plt.legend(loc="best", prop=dict(size=12))
-
-    plt.figure(figsize=(6, 5))
-    plt.title("Histogram of the weights")
-    plt.hist(clf.coef_, bins=n_features, log=True)
-    # plt.plot(clf.coef_[feature_array], 5 * np.ones(len(feature_array)),
-    #          'ro', label="Relevant features")
-    plt.ylabel("Features")
-    plt.xlabel("Values of the weights")
-    plt.legend(loc="lower left")
-
-    plt.figure(figsize=(6, 5))
-    plt.title("Marginal log-likelihood")
-    plt.plot(clf.scores_)
-    plt.ylabel("Score")
-    plt.xlabel("Iterations")
-    plt.show()
-    
-
+    return (feature_array, label_array)
 
 
 def correctDate(old_date, IS_BITCOIN):
@@ -250,7 +221,65 @@ def correctDate(old_date, IS_BITCOIN):
         return new_date_string
 
 
+def bayesianRidgeRegression(feature_array, label_array):
+    clf = BayesianRidge(compute_score=True)
+    clf.fit(feature_array, label_array)
+
+    ols = LinearRegression()
+    ols.fit(feature_array, label_array)
+
+
+    n_features = 9
+
+    plt.figure(figsize=(6, 5))
+    plt.title("Weights of the model")
+    plt.plot(clf.coef_, 'b-', label="Bayesian Ridge estimate")
+    plt.plot(label_array, 'g-', label="Ground truth")
+    plt.plot(ols.coef_, 'r--', label="OLS estimate")
+    plt.xlabel("Features")
+    plt.ylabel("Values of the weights")
+    plt.legend(loc="best", prop=dict(size=12))
+
+    plt.figure(figsize=(6, 5))
+    plt.title("Histogram of the weights")
+    plt.hist(clf.coef_, bins=n_features, log=True)
+    # plt.plot(clf.coef_[feature_array], 5 * np.ones(len(feature_array)),
+    #          'ro', label="Relevant features")
+    plt.ylabel("Features")
+    plt.xlabel("Values of the weights")
+    plt.legend(loc="lower left")
+
+    plt.figure(figsize=(6, 5))
+    plt.title("Marginal log-likelihood")
+    plt.plot(clf.scores_)
+    plt.ylabel("Score")
+    plt.xlabel("Iterations")
+    plt.show()
+
+def randomForest(feature_array, label_array):
+    train = int(floor(0.8*len(feature_array)))
+    print 'Training with',train,'samples'
+    
+    model = ensemble.RandomForestRegressor(n_estimators=100)
+    model.fit(feature_array[:train], label_array[:train])
+    print'Built random forest and trained it'
+
+    feature_pass_array = feature_array[train:]
+    label_pass_array = label_array[train:]
+
+    predict_labels = model.predict(feature_pass_array)
+    print 'Predicted popularity...'
+
+    i = 0
+    while i<len(predict_labels):
+        print (predict_labels[i], " ... ", label_pass_array[i])
+        i += 1
+
+
 if __name__ == "__main__":
     data_map = gatherData()
-    fitToModelAndPlot(data_map)
+    X, y = organizeData(data_map)
+    bayesianRidgeRegression(X, y)
+    randomForest(X, y)
+
 
