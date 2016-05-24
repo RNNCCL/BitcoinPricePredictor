@@ -1,18 +1,24 @@
 import math
 import os
 import numpy as np
+
 from scipy import stats
 import matplotlib.pyplot as plt
 from sklearn.linear_model import BayesianRidge, LinearRegression
+from sklearn.svm import SVR
+from sklearn import datasets, linear_model
 from sklearn import ensemble
 from math import ceil
 from math import floor
 from scipy.stats import spearmanr
 
+import collections
+
 
 def gather_data():
 
     data_map = {}
+    # data_map = collections.OrderedDict()
     dates = []
     #jap_yen
     with open("../data/japyen_price.csv") as f:
@@ -162,11 +168,13 @@ def gather_data():
             if date in data_map:
                 data_map[date]["bitcoin"] = price
 
-    # print(data_map) 
+    # print(data_map)
 
+    for key in data_map.keys():
+        currencies = data_map[key]
+        if -1 in currencies.values():
+            del data_map[key]
     return(data_map)
-
-    
 
 
 def organize_data(data_map):
@@ -261,22 +269,49 @@ def cal_correlation(x,y):
     return rank_correlation
 
 def random_forest(feature_array, label_array):
+    print("feature_array:",)
     train = int(floor(0.8*len(feature_array)))
     print 'Training with',train,'samples'
     
-    model = ensemble.RandomForestRegressor(n_estimators=100)
-    model.fit(feature_array[:train], label_array[:train])
+    # Random forest model
+    rf = ensemble.RandomForestRegressor(n_estimators=100)
+    rf.fit(feature_array[:train], label_array[:train])
     print'Built random forest and trained it'
+
+    # Linear regression
+    regr = linear_model.LinearRegression()
+    regr.fit(feature_array[:train], label_array[:train])
+    print'Built Linear'
+
+    # SVR
+    clf = SVR()
+    clf.fit(feature_array[:train], label_array[:train])
+    print'Built SVR'
+
 
     feature_pass_array = feature_array[train:]
     label_pass_array = label_array[train:]
 
-    predict_labels = model.predict(feature_pass_array)
-    print 'Predicted popularity...'
+    predict_labels_2 = ((0.98137,6.5388,7.764525,0.886093,23.94465,109.635,0.68358,3.75025,65.2635),(0.972585,6.5002,7.7612,0.876885,23.6973,107.1085,0.693005,3.75025,65.879))
 
+    # Random forest
+    predicted_rf = rf.predict(predict_labels_2)
+    print("Predicted RF:",predicted_rf)
+
+    # SVR
+    predicted_clf = clf.predict(predict_labels_2)
+    print("Predicted SVR:",predicted_clf)
+
+    # Linear regression
+    predicted_linear = regr.predict(predict_labels_2)
+    print("Predicted Linear:",predicted_linear)
+
+
+    # Complete dataset
+    predict_labels = regr.predict(feature_pass_array)
     i = 0
     while i<len(predict_labels):
-        print (predict_labels[i], " ... ", label_pass_array[i])
+        print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
 
     rank_correlation = cal_correlation(label_pass_array,predict_labels)
@@ -290,7 +325,7 @@ def random_forest(feature_array, label_array):
 if __name__ == "__main__":
     data_map = gather_data()
     X, y = organize_data(data_map)
-    bayesian_ridge_regression(X, y)
+    # bayesian_ridge_regression(X, y)
     random_forest(X, y)
 
 
