@@ -176,8 +176,7 @@ def gather_data():
             del data_map[key]
     return(data_map)
 
-
-def organize_data(data_map):
+def organize_data_correlate(data_map):
     feature_array = []
     label_array = []
     for date,val in data_map.iteritems():
@@ -203,6 +202,74 @@ def organize_data(data_map):
         features = (franc, yuan, hkd, euro, koruna, jap_yen, pound, riyal, rouble)
         feature_array.append(features)
         label_array.append(bitcoin)
+
+    print("feature_array size:",len(feature_array))
+    print("label_array size:",len(label_array))
+
+    return (feature_array, label_array)
+
+
+def organize_data_predict(data_map):
+    feature_array = []
+    label_array = []
+
+    yesterday_franc = -1
+    yesterday_yuan =  -1
+    yesterday_hkd = -1
+    yesterday_euro = -1
+    yesterday_koruna = -1
+    yesterday_jap_yen = -1
+    yesterday_pound = -1
+    yesterday_bitcoin = -1
+    yesterday_riyal = -1
+    yesterday_rouble = -1
+
+    for date,val in data_map.iteritems():
+        franc = float(val["franc"])
+        yuan =  float(val["yuan"])
+        hkd = float(val["hkd"])
+        euro = float(val["euro"])
+        koruna = float(val["koruna"])
+        jap_yen = float(val["jap_yen"])
+        pound = float(val["pound"])
+        bitcoin = float(val["bitcoin"])
+        riyal = float(val["riyal"])
+        rouble = float(val["rouble"])
+
+        # print(riyal)
+
+        if(franc == 0 or yuan == 0 or hkd == 0 or euro == 0 or koruna == 0 or jap_yen == 0 or pound == 0 or riyal == 0 or rouble == 0):
+            continue
+
+        if(bitcoin > 100000):
+            continue
+
+        if(yesterday_bitcoin == -1 or yesterday_jap_yen == -1):
+            yesterday_franc = franc
+            yesterday_yuan =  yuan
+            yesterday_hkd = hkd
+            yesterday_euro = euro
+            yesterday_koruna = koruna
+            yesterday_jap_yen = jap_yen
+            yesterday_pound = pound
+            yesterday_bitcoin = bitcoin
+            yesterday_riyal = riyal
+            yesterday_rouble = rouble
+            continue
+
+        features = (yesterday_franc, yesterday_yuan, yesterday_hkd, yesterday_euro, yesterday_koruna, yesterday_jap_yen, yesterday_pound, yesterday_riyal, yesterday_rouble, yesterday_bitcoin)
+        feature_array.append(features)
+        label_array.append(bitcoin)
+        yesterday_franc = franc
+        yesterday_yuan =  yuan
+        yesterday_hkd = hkd
+        yesterday_euro = euro
+        yesterday_koruna = koruna
+        yesterday_jap_yen = jap_yen
+        yesterday_pound = pound
+        yesterday_bitcoin = bitcoin
+        yesterday_riyal = riyal
+        yesterday_rouble = rouble
 
     print("feature_array size:",len(feature_array))
     print("label_array size:",len(label_array))
@@ -269,7 +336,7 @@ def cal_correlation(x,y):
     return rank_correlation
 
 def random_forest(feature_array, label_array):
-    print("feature_array:",)
+    # print("feature_array:",feature_array)
     train = int(floor(0.8*len(feature_array)))
     print 'Training with',train,'samples'
     
@@ -292,26 +359,29 @@ def random_forest(feature_array, label_array):
     feature_pass_array = feature_array[train:]
     label_pass_array = label_array[train:]
 
-    predict_labels_2 = ((0.98137,6.5388,7.764525,0.886093,23.94465,109.635,0.68358,3.75025,65.2635),(0.972585,6.5002,7.7612,0.876885,23.6973,107.1085,0.693005,3.75025,65.879))
-
+    # predict_labels_2 = ((0.98137,6.5388,7.764525,0.886093,23.94465,109.635,0.68358,3.75025,65.2635),(0.972585,6.5002,7.7612,0.876885,23.6973,107.1085,0.693005,3.75025,65.879))
+    # Features for 5/4/16 - the day after our training stops.
+    predict_labels_2 = ((0.951905,6.4918,7.76309,0.86734,23.44365,106.1975,0.6864,3.75025,65.68225),(0,0,0,0,0,0,0,0,0)) 
+    
     # Random forest
-    predicted_rf = rf.predict(predict_labels_2)
-    print("Predicted RF:",predicted_rf)
+    # predicted_rf = rf.predict(predict_labels_2)
+    # print("Predicted RF:",predicted_rf)
 
     # SVR
-    predicted_clf = clf.predict(predict_labels_2)
-    print("Predicted SVR:",predicted_clf)
+    # predicted_clf = clf.predict(predict_labels_2)
+    # print("Predicted SVR:",predicted_clf)
 
     # Linear regression
-    predicted_linear = regr.predict(predict_labels_2)
-    print("Predicted Linear:",predicted_linear)
+    # predicted_linear = regr.predict(predict_labels_2)
+    # print("Predicted Linear:",predicted_linear)
 
 
     # Complete dataset
-    predict_labels = regr.predict(feature_pass_array)
+    predict_labels = rf.predict(feature_pass_array)
+    # predict_labels = rf.predict(predict_labels)
     i = 0
     while i<len(predict_labels):
-        print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
+        # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
 
     rank_correlation = cal_correlation(label_pass_array,predict_labels)
@@ -324,7 +394,12 @@ def random_forest(feature_array, label_array):
 
 if __name__ == "__main__":
     data_map = gather_data()
-    X, y = organize_data(data_map)
+
+    X, y = organize_data_correlate(data_map)
+    # bayesian_ridge_regression(X, y)
+    random_forest(X, y)
+
+    X, y = organize_data_predict(data_map)
     # bayesian_ridge_regression(X, y)
     random_forest(X, y)
 
