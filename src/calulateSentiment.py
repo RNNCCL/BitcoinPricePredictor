@@ -56,7 +56,7 @@ def get_subreddit_sentiment(directory, file_to_write, num_comments):
             if data[date]["count"] == 0:
                 continue
 
-            data[date]["avg_sentiment"] = data[date]["sentiment"] / data[date]["count"]
+            data[date]["avg_sentiment"] = data[date]["sentiment"] # / data[date]["count"]
             write_data[date] = data[date]["avg_sentiment"]
         #     break
         # break

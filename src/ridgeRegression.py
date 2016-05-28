@@ -475,7 +475,7 @@ def random_forest(feature_array, label_array):
 
 
     # Complete dataset
-    predict_labels = regr.predict(feature_pass_array)
+    predict_labels = rf.predict(feature_pass_array)
     # predict_labels = rf.predict(predict_labels_2)
     i = 0
     fuckup_count = 0
@@ -483,7 +483,7 @@ def random_forest(feature_array, label_array):
         fucked = abs(predict_labels[i]) - label_pass_array[i]
         if(fucked > 10):
             fuckup_count += 1
-            print ("fuckup: ", fucked)
+            print ("fuckup: ", fucked, predict_labels[i], label_pass_array[i])
         # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
 
