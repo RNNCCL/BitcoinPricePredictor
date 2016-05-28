@@ -17,8 +17,8 @@ import collections
 
 def gather_data():
 
-    data_map = {}
-    # data_map = collections.OrderedDict()
+    # data_map = {}
+    data_map = collections.OrderedDict()
     dates = []
     #jap_yen
     with open("../data/japyen_price.csv") as f:
@@ -335,6 +335,16 @@ def cal_correlation(x,y):
     rank_correlation = spearmanr(x, y)[0]
     return rank_correlation
 
+def mean_average_error(predicted_labels, actual_labels):
+    i = 0
+    mae = 0
+    while i < len(predicted_labels):
+        mae += abs(predicted_labels[i] - actual_labels[i])
+        i += 1
+
+    return mae/len(predicted_labels)
+
+
 def random_forest(feature_array, label_array):
     # print("feature_array:",feature_array)
     train = int(floor(0.8*len(feature_array)))
@@ -361,7 +371,7 @@ def random_forest(feature_array, label_array):
 
     # predict_labels_2 = ((0.98137,6.5388,7.764525,0.886093,23.94465,109.635,0.68358,3.75025,65.2635),(0.972585,6.5002,7.7612,0.876885,23.6973,107.1085,0.693005,3.75025,65.879))
     # Features for 5/4/16 - the day after our training stops.
-    predict_labels_2 = ((0.951905,6.4918,7.76309,0.86734,23.44365,106.1975,0.6864,3.75025,65.68225),(0,0,0,0,0,0,0,0,0)) 
+    predict_labels_2 = ((0.99024,6.5467,7.7668,0.89102,24.082,110.255,0.6866,3.7516,66.8665,442.99),(0,0,0,0,0,0,0,0,0,0)) 
     
     # Random forest
     # predicted_rf = rf.predict(predict_labels_2)
@@ -378,29 +388,36 @@ def random_forest(feature_array, label_array):
 
     # Complete dataset
     predict_labels = rf.predict(feature_pass_array)
-    # predict_labels = rf.predict(predict_labels)
+    # predict_labels = rf.predict(predict_labels_2)
     i = 0
     while i<len(predict_labels):
-        # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
+        print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
 
     rank_correlation = cal_correlation(label_pass_array,predict_labels)
+    mae = mean_average_error(predict_labels, label_pass_array)
     
     print '\nTraining done --------- '
     print 'Total samples:          ',len(feature_array)
     print 'Size of test data:      ',len(predict_labels)
     print 'Rank correlation:',rank_correlation
+    print 'MAE:',mae
     print '----------------------- \n'
 
 if __name__ == "__main__":
     data_map = gather_data()
 
-    X, y = organize_data_correlate(data_map)
+    # X, y = organize_data_correlate(data_map)
     # bayesian_ridge_regression(X, y)
-    random_forest(X, y)
+    # random_forest(X, y)
 
     X, y = organize_data_predict(data_map)
     # bayesian_ridge_regression(X, y)
     random_forest(X, y)
+
+
+
+
+
 
 
