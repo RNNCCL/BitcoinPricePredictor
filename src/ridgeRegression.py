@@ -42,6 +42,9 @@ def gather_data():
                     "koruna": -1, 
                     "franc": -1, 
                     "hkd": -1, 
+                    "trans":0,
+                    "sentiment": 0,
+                    "sentiment2": 0,
                     "bitcoin": -1
                 }
                 dates.append(date)
@@ -152,6 +155,45 @@ def gather_data():
             if date in data_map:
                 data_map[date]["hkd"] = price
 
+    with open("../data/num_transactions_per_day.csv") as f:
+        first_line = True
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0].split()[0]
+            date = correct_date(date, False)
+            price = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["trans"] = price
+
+    with open("./data_sentiment/sentiment_by_date.csv") as f:
+        first_line = True
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correct_date_sentiment(date, True)
+            sentiment = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["sentiment"] = sentiment
+
+    with open("./data_sentiment/r_bitcoin_sentiment_by_date.csv") as f:
+        first_line = True
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0]
+            date = correct_date_sentiment(date, True)
+            sentiment = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["sentiment2"] = sentiment
+
     with open("../data/bitcoin_price.csv") as f:
         first_line = True
         for line in f:
@@ -223,6 +265,9 @@ def organize_data_predict(data_map):
     yesterday_bitcoin = -1
     yesterday_riyal = -1
     yesterday_rouble = -1
+    yesterday_sentiment = 0
+    yesterday_sentiment2 = 0
+    yesterday_trans = 0
 
     for date,val in data_map.iteritems():
         franc = float(val["franc"])
@@ -235,6 +280,9 @@ def organize_data_predict(data_map):
         bitcoin = float(val["bitcoin"])
         riyal = float(val["riyal"])
         rouble = float(val["rouble"])
+        sentiment_val = float(val["sentiment"])
+        sentiment2_val = float(val["sentiment2"])
+        trans_num = float(val["trans"])
 
         # print(riyal)
 
@@ -255,11 +303,25 @@ def organize_data_predict(data_map):
             yesterday_bitcoin = bitcoin
             yesterday_riyal = riyal
             yesterday_rouble = rouble
+            yesterday_sentiment = sentiment_val
+            yesterday_sentiment2 = sentiment2_val
+            yesterday_trans = trans_num
             continue
 
-        features = (yesterday_franc, yesterday_yuan, yesterday_hkd, yesterday_euro, yesterday_koruna, yesterday_jap_yen, yesterday_pound, yesterday_riyal, yesterday_rouble, yesterday_bitcoin)
+        # features = (yesterday_franc, yesterday_yuan, yesterday_hkd, 
+        #     yesterday_euro, yesterday_koruna, yesterday_jap_yen, 
+        #     yesterday_pound, yesterday_riyal, yesterday_rouble, yesterday_trans,
+        #     yesterday_sentiment, yesterday_sentiment2, yesterday_bitcoin)
+
+        features = (yesterday_hkd, 
+            yesterday_rouble, yesterday_trans,
+            yesterday_sentiment, yesterday_sentiment2, yesterday_bitcoin)
+
+        # features = (yesterday_bitcoin, 0)
+
         feature_array.append(features)
         label_array.append(bitcoin)
+
         yesterday_franc = franc
         yesterday_yuan =  yuan
         yesterday_hkd = hkd
@@ -270,6 +332,9 @@ def organize_data_predict(data_map):
         yesterday_bitcoin = bitcoin
         yesterday_riyal = riyal
         yesterday_rouble = rouble
+        yesterday_sentiment = sentiment_val
+        yesterday_sentiment2 = sentiment2_val
+        yesterday_trans = trans_num
 
     print("feature_array size:",len(feature_array))
     print("label_array size:",len(label_array))
@@ -281,6 +346,24 @@ def correct_date(old_date, IS_BITCOIN):
         new_date_string = ""
 
         split_date = old_date.split("/")
+        if(len(split_date[1]) == 1):
+            split_date[1] = "0" + split_date[1]
+        if(len(split_date[0]) == 1):
+            split_date[0] = "0" + split_date[0]
+        if(len(split_date[2]) != 4):
+            split_date[2] = "20" + split_date[2]
+
+        if(IS_BITCOIN):
+            new_date_string = split_date[0] + "/" + split_date[1] + "/" + split_date[2]
+        else:
+            new_date_string = split_date[1] + "/" + split_date[0] + "/" + split_date[2]
+
+        return new_date_string
+
+def correct_date_sentiment(old_date, IS_BITCOIN):
+        new_date_string = ""
+
+        split_date = old_date.split("-")
         if(len(split_date[1]) == 1):
             split_date[1] = "0" + split_date[1]
         if(len(split_date[0]) == 1):
@@ -371,7 +454,7 @@ def random_forest(feature_array, label_array):
 
     # predict_labels_2 = ((0.98137,6.5388,7.764525,0.886093,23.94465,109.635,0.68358,3.75025,65.2635),(0.972585,6.5002,7.7612,0.876885,23.6973,107.1085,0.693005,3.75025,65.879))
     # Features for 5/4/16 - the day after our training stops.
-    predict_labels_2 = ((0.99024,6.5467,7.7668,0.89102,24.082,110.255,0.6866,3.7516,66.8665,442.99),(0,0,0,0,0,0,0,0,0,0)) 
+    # predict_labels_2 = ((0.99024,6.5467,7.7668,0.89102,24.082,110.255,0.6866,3.7516,66.8665,442.99),(0,0,0,0,0,0,0,0,0,0)) 
     
     # Random forest
     # predicted_rf = rf.predict(predict_labels_2)
@@ -382,17 +465,28 @@ def random_forest(feature_array, label_array):
     # print("Predicted SVR:",predicted_clf)
 
     # Linear regression
-    # predicted_linear = regr.predict(predict_labels_2)
+    # predict_labels = regr.predict(feature_pass_array)
     # print("Predicted Linear:",predicted_linear)
 
 
+    # Important features
+    print "Important features:"
+    print rf.feature_importances_
+
+
     # Complete dataset
-    predict_labels = rf.predict(feature_pass_array)
+    predict_labels = regr.predict(feature_pass_array)
     # predict_labels = rf.predict(predict_labels_2)
     i = 0
+    fuckup_count = 0
     while i<len(predict_labels):
+        fucked = abs(predict_labels[i]) - label_pass_array[i]
+        if(fucked > 10):
+            fuckup_count += 1
+            print ("fuckup: ", fucked)
         # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
+
 
     rank_correlation = cal_correlation(label_pass_array,predict_labels)
     mae = mean_average_error(predict_labels, label_pass_array)
@@ -402,6 +496,7 @@ def random_forest(feature_array, label_array):
     print 'Size of test data:      ',len(predict_labels)
     print 'Rank correlation:',rank_correlation
     print 'MAE:',mae
+    print 'fuckup_count:',fuckup_count
     print '----------------------- \n'
 
 if __name__ == "__main__":
