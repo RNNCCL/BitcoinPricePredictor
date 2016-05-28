@@ -8,7 +8,10 @@ sys.setdefaultencoding('utf8')
 
 def getSentiment(tweet):
     blob = TextBlob(tweet)
-    return blob.sentiment.polarity
+    x = blob.sentiment.polarity
+    if(x>0.5):
+        print blob + " !!!!! " + str(x)
+    return x
 
 
 directory = "./data/data_bitcoinmarkets/"

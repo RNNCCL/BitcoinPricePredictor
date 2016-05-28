@@ -391,7 +391,7 @@ def random_forest(feature_array, label_array):
     # predict_labels = rf.predict(predict_labels_2)
     i = 0
     while i<len(predict_labels):
-        print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
+        # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
 
     rank_correlation = cal_correlation(label_pass_array,predict_labels)
