@@ -33,18 +33,20 @@ def gather_data():
             date = correct_date(date, False)
             if date not in data_map:
                 data_map[date] = {
-                    "jap_yen": price, 
-                    "yuan": -1, 
-                    "riyal": -1, 
-                    "rouble": -1, 
-                    "euro": -1, 
-                    "pound": -1, 
-                    "koruna": -1, 
-                    "franc": -1, 
-                    "hkd": -1, 
-                    "trans":0,
+                    "jap_yen": price,
+                    "yuan": -1,
+                    "riyal": -1,
+                    "rouble": -1,
+                    "euro": -1,
+                    "pound": -1,
+                    "koruna": -1,
+                    "franc": -1,
+                    "hkd": -1,
+                    "trans": 0,
                     "sentiment": 0,
                     "sentiment2": 0,
+                    "swaps": -1,
+                    "spread": -1,
                     "bitcoin": -1
                 }
                 dates.append(date)
@@ -75,7 +77,7 @@ def gather_data():
             price = split[1].rstrip()
             if date in data_map:
                 data_map[date]["yuan"] = price
-            
+
 
     with open("../data/riyal_price.csv") as f:
         first_line = True
@@ -194,6 +196,34 @@ def gather_data():
             if date in data_map:
                 data_map[date]["sentiment2"] = sentiment
 
+    with open("../data/total_lends.csv") as f:
+        first_line = True
+        print "what"
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[1].split()[0]
+            date = correct_date(date, True)
+            swaps = split[3].rstrip()
+            if date in data_map:
+                data_map[date]["swaps"] = swaps
+
+    with open("../data/spread_data.csv") as f:
+        first_line = True
+        print "what"
+        for line in f:
+            if(first_line):
+                first_line = False
+                continue
+            split = line.split(",")
+            date = split[0].split()[0]
+            date = correct_date_spread(date)
+            spread = split[1].rstrip()
+            if date in data_map:
+                data_map[date]["spread"] = spread
+
     with open("../data/bitcoin_price.csv") as f:
         first_line = True
         for line in f:
@@ -232,6 +262,7 @@ def organize_data_correlate(data_map):
         bitcoin = float(val["bitcoin"])
         riyal = float(val["riyal"])
         rouble = float(val["rouble"])
+        swaps = float(val["swaps"])
 
         # print(riyal)
 
@@ -268,6 +299,8 @@ def organize_data_predict(data_map):
     yesterday_sentiment = 0
     yesterday_sentiment2 = 0
     yesterday_trans = 0
+    yesterday_swaps = -1
+    yesterday_spread = -1
 
     for date,val in data_map.iteritems():
         franc = float(val["franc"])
@@ -283,19 +316,17 @@ def organize_data_predict(data_map):
         sentiment_val = float(val["sentiment"])
         sentiment2_val = float(val["sentiment2"])
         trans_num = float(val["trans"])
+        swaps = float(val["swaps"])
+        spread = float(val["spread"])
 
         # print(riyal)
-
-        if(franc == 0 or yuan == 0 or hkd == 0 or euro == 0 or koruna == 0 or jap_yen == 0 or pound == 0 or riyal == 0 or rouble == 0):
-            continue
-
         if(bitcoin > 100000):
             print bitcoin
             continue
 
         if(yesterday_bitcoin == -1 or yesterday_jap_yen == -1):
             yesterday_franc = franc
-            yesterday_yuan =  yuan
+            yesterday_yuan = yuan
             yesterday_hkd = hkd
             yesterday_euro = euro
             yesterday_koruna = koruna
@@ -307,16 +338,20 @@ def organize_data_predict(data_map):
             yesterday_sentiment = sentiment_val
             yesterday_sentiment2 = sentiment2_val
             yesterday_trans = trans_num
+            yesterday_swaps = swaps
+            yesterday_spread = spread
             continue
 
-        # features = (yesterday_franc, yesterday_yuan, yesterday_hkd, 
-        #     yesterday_euro, yesterday_koruna, yesterday_jap_yen, 
+        # features = (yesterday_franc, yesterday_yuan, yesterday_hkd,
+        #     yesterday_euro, yesterday_koruna, yesterday_jap_yen,
         #     yesterday_pound, yesterday_riyal, yesterday_rouble, yesterday_trans,
-        #     yesterday_sentiment, yesterday_sentiment2, yesterday_bitcoin)
+        #     yesterday_sentiment, yesterday_sentiment2, yesterday_swaps, yesterday_spread, yesterday_bitcoin)
 
-        features = (yesterday_hkd, 
-            yesterday_rouble, yesterday_trans,
-            yesterday_sentiment, yesterday_sentiment2, yesterday_bitcoin)
+        # features = (yesterday_hkd,
+        #            yesterday_rouble, yesterday_trans,
+        #            yesterday_sentiment, yesterday_sentiment2, yesterday_swaps, yesterday_spread, yesterday_bitcoin)
+
+        features = (yesterday_rouble, yesterday_trans, yesterday_sentiment, yesterday_sentiment2, yesterday_swaps, yesterday_spread, yesterday_bitcoin)
 
         # features = (yesterday_bitcoin, 0)
 
@@ -324,7 +359,7 @@ def organize_data_predict(data_map):
         label_array.append(bitcoin)
 
         yesterday_franc = franc
-        yesterday_yuan =  yuan
+        yesterday_yuan = yuan
         yesterday_hkd = hkd
         yesterday_euro = euro
         yesterday_koruna = koruna
@@ -336,6 +371,8 @@ def organize_data_predict(data_map):
         yesterday_sentiment = sentiment_val
         yesterday_sentiment2 = sentiment2_val
         yesterday_trans = trans_num
+        yesterday_swaps = swaps
+        yesterday_spread = spread
 
     print("feature_array size:",len(feature_array))
     print("label_array size:",len(label_array))
@@ -361,6 +398,7 @@ def correct_date(old_date, IS_BITCOIN):
 
         return new_date_string
 
+
 def correct_date_sentiment(old_date, IS_BITCOIN):
         new_date_string = ""
 
@@ -378,6 +416,22 @@ def correct_date_sentiment(old_date, IS_BITCOIN):
             new_date_string = split_date[1] + "/" + split_date[0] + "/" + split_date[2]
 
         return new_date_string
+
+
+def correct_date_spread(old_date):
+    new_date_string = ""
+
+    split_date = old_date.split("-")
+    if(len(split_date[1]) == 1):
+        split_date[1] = "0" + split_date[1]
+    if(len(split_date[2]) == 1):
+        split_date[2] = "0" + split_date[2]
+    if(len(split_date[0]) != 4):
+        split_date[0] = "20" + split_date[0]
+
+    new_date_string = split_date[1] + "/" + split_date[2] + "/" + split_date[0]
+
+    return new_date_string
 
 
 def bayesian_ridge_regression(feature_array, label_array):
@@ -442,7 +496,7 @@ def random_forest(feature_array, label_array):
     # print("feature_array:",feature_array)
     train = int(floor(0.8*len(feature_array)))
     print 'Training with',train,'samples'
-    
+
     # Random forest model
     rf = ensemble.RandomForestRegressor(n_estimators=100)
     rf.fit(feature_array[:train], label_array[:train])
@@ -465,7 +519,7 @@ def random_forest(feature_array, label_array):
     # predict_labels_2 = ((0.98137,6.5388,7.764525,0.886093,23.94465,109.635,0.68358,3.75025,65.2635),(0.972585,6.5002,7.7612,0.876885,23.6973,107.1085,0.693005,3.75025,65.879))
     # Features for 5/4/16 - the day after our training stops.
     # predict_labels_2 = ((0.99024,6.5467,7.7668,0.89102,24.082,110.255,0.6866,3.7516,66.8665,442.99),(0,0,0,0,0,0,0,0,0,0)) 
-    
+
     # Random forest
     # predicted_rf = rf.predict(predict_labels_2)
     # print("Predicted RF:",predicted_rf)
@@ -485,11 +539,17 @@ def random_forest(feature_array, label_array):
 
 
     # Complete dataset
-    predict_labels = rf.predict(feature_pass_array)
+
+    ##########################################################################
+
+    predict_labels = regr.predict(feature_pass_array)
+
+    ##########################################################################
+
     # predict_labels = rf.predict(predict_labels_2)
     i = 0
     fuckup_count = 0
-    while i<len(predict_labels):
+    while i < len(predict_labels):
         fucked = abs(predict_labels[i]) - label_pass_array[i]
         if(fucked > 10):
             fuckup_count += 1
@@ -497,11 +557,11 @@ def random_forest(feature_array, label_array):
         # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
 
-
-    rank_correlation = cal_correlation(label_pass_array,predict_labels)
+    rank_correlation = cal_correlation(label_pass_array, predict_labels)
     mae = mean_average_error(predict_labels, label_pass_array)
+
     mse = mean_square_error(predict_labels, label_pass_array)
-    
+
     print '\nTraining done --------- '
     print 'Total samples:          ',len(feature_array)
     print 'Size of test data:      ',len(predict_labels)
