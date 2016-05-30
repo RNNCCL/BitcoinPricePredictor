@@ -290,6 +290,7 @@ def organize_data_predict(data_map):
             continue
 
         if(bitcoin > 100000):
+            print bitcoin
             continue
 
         if(yesterday_bitcoin == -1 or yesterday_jap_yen == -1):
@@ -427,6 +428,15 @@ def mean_average_error(predicted_labels, actual_labels):
 
     return mae/len(predicted_labels)
 
+def mean_square_error(predicted_labels, actual_labels):
+    i = 0
+    mse = 0
+    while i < len(predicted_labels):
+        mse += pow(abs(predicted_labels[i] - actual_labels[i]),2)
+        i += 1
+
+    return mse/len(predicted_labels)
+
 
 def random_forest(feature_array, label_array):
     # print("feature_array:",feature_array)
@@ -490,12 +500,14 @@ def random_forest(feature_array, label_array):
 
     rank_correlation = cal_correlation(label_pass_array,predict_labels)
     mae = mean_average_error(predict_labels, label_pass_array)
+    mse = mean_square_error(predict_labels, label_pass_array)
     
     print '\nTraining done --------- '
     print 'Total samples:          ',len(feature_array)
     print 'Size of test data:      ',len(predict_labels)
     print 'Rank correlation:',rank_correlation
     print 'MAE:',mae
+    print 'MSE:',mse
     print 'fuckup_count:',fuckup_count
     print '----------------------- \n'
 
