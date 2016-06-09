@@ -626,10 +626,10 @@ def random_forest(feature_array, label_array, date_array, just_bitcoin):
         num_wrong = abs(predict_labels[i] - label_pass_array[i])
         if(num_wrong >= 10 and num_wrong <= 20):
             wrong_count_1 += 1
-            print ("fuckup: ", num_wrong, predict_labels[i], label_pass_array[i])
+            print ("num_wrong: ", num_wrong, predict_labels[i], label_pass_array[i])
         if(num_wrong > 20):
             wrong_count_2 += 1
-            print ("fuckup: ", num_wrong, predict_labels[i], label_pass_array[i])
+            print ("num_wrong: ", num_wrong, predict_labels[i], label_pass_array[i])
         # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
 
@@ -640,10 +640,10 @@ def random_forest(feature_array, label_array, date_array, just_bitcoin):
         num_wrong = abs(label_pass_array[i] - just_bitcoin_testing[i])
         if(num_wrong >= 10 and num_wrong <= 20):
             btc_wrong_count_1 += 1
-            print ("fuckup: ", num_wrong, just_bitcoin_testing[i], label_pass_array[i])
+            print ("num_wrong: ", num_wrong, just_bitcoin_testing[i], label_pass_array[i])
         if(num_wrong > 20):
             btc_wrong_count_2 += 1
-            print ("fuckup: ", num_wrong, just_bitcoin_testing[i], label_pass_array[i])
+            print ("num_wrong: ", num_wrong, just_bitcoin_testing[i], label_pass_array[i])
         # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
 
