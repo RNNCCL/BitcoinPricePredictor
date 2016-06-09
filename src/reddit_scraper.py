@@ -7,7 +7,7 @@ sys.setdefaultencoding('utf8')
 
 data = {}
 
-r = praw.Reddit(user_agent = "some random bullshit version 1.6577333")
+r = praw.Reddit(user_agent = "version 1.6577333")
 
 num_submissions = 0
 file_id = 0

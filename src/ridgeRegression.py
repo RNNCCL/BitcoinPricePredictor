@@ -11,8 +11,9 @@ from sklearn import ensemble
 from math import ceil
 from math import floor
 from scipy.stats import spearmanr
-
+import sys
 import collections
+from matplotlib.backends.backend_pdf import PdfPages
 
 
 def gather_data():
@@ -285,6 +286,9 @@ def organize_data_correlate(data_map):
 def organize_data_predict(data_map):
     feature_array = []
     label_array = []
+    date_array = []
+
+    feature_bitcoin = []
 
     yesterday_franc = -1
     yesterday_yuan =  -1
@@ -351,12 +355,15 @@ def organize_data_predict(data_map):
         #            yesterday_rouble, yesterday_trans,
         #            yesterday_sentiment, yesterday_sentiment2, yesterday_swaps, yesterday_spread, yesterday_bitcoin)
 
-        features = (yesterday_rouble, yesterday_trans, yesterday_sentiment, yesterday_sentiment2, yesterday_swaps, yesterday_spread, yesterday_bitcoin)
+        features = (yesterday_rouble, yesterday_yuan, yesterday_trans, yesterday_sentiment, yesterday_sentiment2, yesterday_swaps, yesterday_spread, yesterday_bitcoin)
 
-        # features = (yesterday_bitcoin, 0)
+        features_bitcoin = (yesterday_bitcoin, 0)
 
+        feature_bitcoin.append(features_bitcoin)
         feature_array.append(features)
         label_array.append(bitcoin)
+        date_array.append(date)
+
 
         yesterday_franc = franc
         yesterday_yuan = yuan
@@ -377,7 +384,7 @@ def organize_data_predict(data_map):
     print("feature_array size:",len(feature_array))
     print("label_array size:",len(label_array))
 
-    return (feature_array, label_array)
+    return (feature_array, label_array, date_array, feature_bitcoin)
 
 
 def correct_date(old_date, IS_BITCOIN):
@@ -491,8 +498,56 @@ def mean_square_error(predicted_labels, actual_labels):
 
     return mse/len(predicted_labels)
 
+def graph_predicted_vs_actual(dates, actual, predicted, algo, just_bitcoin_testing):
 
-def random_forest(feature_array, label_array):
+    colors = {"predicted": "b-", "actual": "r-", "baseline": "g-"}
+
+    y_actual = []
+    y_predicted = []
+    baseline = []
+    date_ticks = []
+    x = []
+
+    fig = plt.figure()
+    fig.suptitle("Predicted vs. Actual BTC - " + algo, fontsize=14, fontweight='bold')
+    ax = plt.subplot(111)
+    plt.gcf().subplots_adjust(bottom=0.15)
+    plt.ylabel('USD')
+
+    axes = plt.gca()
+    axes.set_ylim([325,475])
+
+    for i in range(0, len(dates)):
+        y_actual.append(actual[i])
+        y_predicted.append(predicted[i])
+        x.append(i)
+        baseline.append(just_bitcoin_testing[i])
+        if(i % 30 == 0):
+            date_ticks.append(dates[i])
+        else:
+            date_ticks.append("")
+
+    plt.xticks(x, date_ticks, rotation=45)
+    ax = plt.gca()
+    
+    ax.plot(x, y_actual, colors["actual"], label="Actual", linewidth=1)
+    ax.plot(x, y_predicted, colors["predicted"], label="Predicted", linewidth=1)
+    ax.plot(x, baseline, colors["baseline"], label="Baseline", linewidth=1)
+    # plt.axvline(x=15)
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                     box.width, box.height * 0.9])
+
+    # Put a legend below current axis
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2),
+          fancybox=True, shadow=True, ncol=5)
+    pp = PdfPages("./graphs/predicted_vs_actual_" +  algo + ".pdf")
+    pp.savefig()
+    pp.close()
+    # plt.savefig("./graphs/" + file_name + ".jpg")
+
+def random_forest(feature_array, label_array, date_array, just_bitcoin):
     # print("feature_array:",feature_array)
     train = int(floor(0.8*len(feature_array)))
     print 'Training with',train,'samples'
@@ -515,6 +570,12 @@ def random_forest(feature_array, label_array):
 
     feature_pass_array = feature_array[train:]
     label_pass_array = label_array[train:]
+    date_test_set = date_array[train:]
+    # just_bitcoin_testing = just_bitcoin[train:]
+
+    just_bitcoin_testing = []
+    for a in just_bitcoin[train:]:
+        just_bitcoin_testing.append(a[0])
 
     # predict_labels_2 = ((0.98137,6.5388,7.764525,0.886093,23.94465,109.635,0.68358,3.75025,65.2635),(0.972585,6.5002,7.7612,0.876885,23.6973,107.1085,0.693005,3.75025,65.879))
     # Features for 5/4/16 - the day after our training stops.
@@ -542,25 +603,59 @@ def random_forest(feature_array, label_array):
 
     ##########################################################################
 
-    predict_labels = regr.predict(feature_pass_array)
+    predict_labels = None
+    if(sys.argv[1] == "lin"):
+        predict_labels = regr.predict(feature_pass_array)
+    elif(sys.argv[1] == "rf"):
+        predict_labels = rf.predict(feature_pass_array)
+    else:
+        sys.exit("Pass in flag!")
+
+    #graph
+    graph_predicted_vs_actual(date_test_set, label_pass_array, predict_labels, sys.argv[1], just_bitcoin_testing)
 
     ##########################################################################
+    if(len(just_bitcoin_testing) != len(predict_labels)):
+        sys.exit("KEK")
 
     # predict_labels = rf.predict(predict_labels_2)
     i = 0
-    fuckup_count = 0
+    wrong_count_1 = 0
+    wrong_count_2 = 0
     while i < len(predict_labels):
-        fucked = abs(predict_labels[i]) - label_pass_array[i]
-        if(fucked > 10):
-            fuckup_count += 1
-            print ("fuckup: ", fucked, predict_labels[i], label_pass_array[i])
+        num_wrong = abs(predict_labels[i] - label_pass_array[i])
+        if(num_wrong >= 10 and num_wrong <= 20):
+            wrong_count_1 += 1
+            print ("fuckup: ", num_wrong, predict_labels[i], label_pass_array[i])
+        if(num_wrong > 20):
+            wrong_count_2 += 1
+            print ("fuckup: ", num_wrong, predict_labels[i], label_pass_array[i])
         # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
         i += 1
+
+    i = 0
+    btc_wrong_count_1 = 0
+    btc_wrong_count_2 = 0
+    while i < len(just_bitcoin_testing):
+        num_wrong = abs(label_pass_array[i] - just_bitcoin_testing[i])
+        if(num_wrong >= 10 and num_wrong <= 20):
+            btc_wrong_count_1 += 1
+            print ("fuckup: ", num_wrong, just_bitcoin_testing[i], label_pass_array[i])
+        if(num_wrong > 20):
+            btc_wrong_count_2 += 1
+            print ("fuckup: ", num_wrong, just_bitcoin_testing[i], label_pass_array[i])
+        # print "%8.4f ... %8.4f" % (predict_labels[i], label_pass_array[i])#str(predict_labels[i]) + " ... " + str(label_pass_array[i])
+        i += 1
+
 
     rank_correlation = cal_correlation(label_pass_array, predict_labels)
     mae = mean_average_error(predict_labels, label_pass_array)
 
     mse = mean_square_error(predict_labels, label_pass_array)
+
+    baseline_mae = mean_average_error(just_bitcoin_testing, label_pass_array)
+    baseline_mse = mean_square_error(just_bitcoin_testing, label_pass_array)
+
 
     print '\nTraining done --------- '
     print 'Total samples:          ',len(feature_array)
@@ -568,7 +663,12 @@ def random_forest(feature_array, label_array):
     print 'Rank correlation:',rank_correlation
     print 'MAE:',mae
     print 'MSE:',mse
-    print 'fuckup_count:',fuckup_count
+    print 'Baseline MAE:',baseline_mae
+    print 'Baseline MSE:',baseline_mse
+    print 'wrong_count_1:',wrong_count_1
+    print 'wrong_count_2:',wrong_count_2
+    print 'btc_wrong_count_1:', btc_wrong_count_1
+    print 'btc_wrong_count_2:', btc_wrong_count_2
     print '----------------------- \n'
 
 if __name__ == "__main__":
@@ -578,9 +678,9 @@ if __name__ == "__main__":
     # bayesian_ridge_regression(X, y)
     # random_forest(X, y)
 
-    X, y = organize_data_predict(data_map)
+    X, y, dates, just_bitcoin = organize_data_predict(data_map)
     # bayesian_ridge_regression(X, y)
-    random_forest(X, y)
+    random_forest(X, y, dates, just_bitcoin)
 
 
 
